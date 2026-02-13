@@ -1,0 +1,7 @@
+name: MenuDemoPlugin
+version: 0.0.1
+main: org.slabserver.demomenu.MenuDemoPlugin
+description: An example plugin showcasing the Dialogs
+author: Slabserver
+website: https://slabserver.org
+api-version: '1.21.11'
