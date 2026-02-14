@@ -1,36 +1,58 @@
 package org.slabserver.demomenu;
 
+import com.mojang.brigadier.Command;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * Entry point. Registers the /demomenu command via the Paper Brigadier API.
- * No plugin.yml command entries are needed.
+ * Plugin entry point.
  *
- * Requires: Paper 1.21.7+ (Dialog API), Java 21, paper-api 1.21.7-R0.1-SNAPSHOT
+ * Commands registered:
+ *   /demomenu      — opens the four-input form demo (DemoDialog)
+ *   /psync-demo    — opens the paginated player list (DemoMenuSystem)
+ *
+ * Listeners registered:
+ *   DemoDialog      — handles form submission
+ *   DemoMenuSystem  — handles all psync:list/player/snapshot/restore navigation
  */
-@SuppressWarnings("UnstableApiUsage") // Dialog API is @Experimental
+@SuppressWarnings("UnstableApiUsage")
 public class MenuDemoPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Register the dialog event listener
-        getServer().getPluginManager().registerEvents(new DemoDialog(), this);
 
-        getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event ->
+        // ── Register listeners ─────────────────────────────────────────────
+        getServer().getPluginManager().registerEvents(new DemoDialog(),     this);
+        getServer().getPluginManager().registerEvents(new DemoMenuSystem(), this);
+
+        // ── Register commands ──────────────────────────────────────────────
+        getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
+
+            // /demomenu — opens the four-input form
             event.registrar().register(
                 Commands.literal("demomenu")
                     .requires(src -> src.getSender() instanceof Player)
                     .executes(ctx -> {
-                        Player player = (Player) ctx.getSource().getSender();
-                        DemoDialog.open(player);
-                        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+                        DemoDialog.open((Player) ctx.getSource().getSender());
+                        return Command.SINGLE_SUCCESS;
                     })
                     .build(),
-                "Opens the demo dialog with all four input types"
-            )
-        );
+                "Opens the Dialog API input-types demo form"
+            );
+
+            // /psync-demo — opens the player list browser at page 0
+            event.registrar().register(
+                Commands.literal("slabsync-demo")
+                    .requires(src -> src.getSender() instanceof Player)
+                    .executes(ctx -> {
+                        DemoMenuSystem.showPlayerList((Player) ctx.getSource().getSender(), 0);
+                        return Command.SINGLE_SUCCESS;
+                    })
+                    .build(),
+                "Opens the SlabSync data snapshot browser demo"
+            );
+        });
     }
 }
